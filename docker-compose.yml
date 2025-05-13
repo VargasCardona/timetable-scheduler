@@ -1,0 +1,42 @@
+services:
+  database:
+    image: mysql:8.0
+    container_name: database_scheduler
+    restart: no
+    env_file:
+      - .env
+    volumes:
+      - ./database/mysql:/var/lib/mysql
+      - ./healthcheck.cnf:/healthcheck.cnf:ro 
+    hostname: scheduler
+    ports:
+      - "3306:3306"
+    networks:
+      - net_scheduler
+    healthcheck:
+        test: ["CMD", "mysqladmin", "--defaults-extra-file=/healthcheck.cnf", "ping", "-h", "localhost"]
+        interval: 30s
+        timeout: 10s
+        retries: 5
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+# --------------------------------------------------------------------
+  adminer:
+    image: adminer
+    container_name: adminer_scheduler
+    restart: no
+    ports:
+      - "8080:8080"
+    networks:
+      - net_scheduler
+    environment:
+      - TZ=America/Bogota
+# --------------------------------------------------------------------
+networks:
+  net_scheduler:
+      driver: bridge
+      name: net_scheduler
+
