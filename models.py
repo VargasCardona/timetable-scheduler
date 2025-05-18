@@ -1,5 +1,4 @@
 import enum
-import uuid
 from sqlalchemy import (
     Column,
     String,
@@ -14,15 +13,14 @@ from sqlalchemy import (
     func
 )
 from sqlalchemy.orm import relationship
-from app.config.database import Base
-
+from config import Base
 
 # Association table for many-to-many relationship between professors and courses
 professor_course_association = Table(
     'professor_course',
     Base.metadata,
-    Column('professor_uuid', BINARY(16), ForeignKey('professors.uuid')),
-    Column('course_uuid', BINARY(16), ForeignKey('courses.uuid'))
+    Column('professor_id', BINARY(16), ForeignKey('professors.id')),
+    Column('course_id', BINARY(16), ForeignKey('courses.id'))
 )
 
 
@@ -62,7 +60,7 @@ class ProfessorRestrictionModel(Base):
     __tablename__ = "professor_restrictions"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    professor_uuid = Column(BINARY(16), ForeignKey('professors.uuid'), nullable=False)
+    professor_id = Column(BINARY(16), ForeignKey('professors.id'), nullable=False)
     weekday = Column(Enum(WeekDay), nullable=False)
     time_block = Column(Enum(TimeBlock), nullable=False)
     
@@ -109,9 +107,9 @@ class ScheduleModel(Base):
     __tablename__ = "schedules"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    course_uuid = Column(BINARY(16), ForeignKey('courses.uuid'), nullable=False)
-    professor_uuid = Column(BINARY(16), ForeignKey('professors.uuid'), nullable=False)
-    classroom_uuid = Column(BINARY(16), ForeignKey('classrooms.uuid'), nullable=False)
+    course_id = Column(BINARY(16), ForeignKey('courses.id'), nullable=False)
+    professor_id = Column(BINARY(16), ForeignKey('professors.id'), nullable=False)
+    classroom_id = Column(BINARY(16), ForeignKey('classrooms.id'), nullable=False)
     weekday = Column(Enum(WeekDay), nullable=False)
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)

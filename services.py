@@ -1,10 +1,9 @@
 import enum
-import uuid
 from datetime import time
 from typing import List, Optional, Dict, Tuple
 from sqlalchemy.orm import Session
 
-from app.models.models import (
+from models import (
     ProfessorModel,
     CourseModel, 
     ClassroomModel,
@@ -20,7 +19,6 @@ class SchedulerService:
     Service to handle scheduling logic for courses, professors, and classrooms.
     """
     
-    @staticmethod
     def add_professor(
         db: Session, 
         name: str, 
@@ -132,8 +130,8 @@ class SchedulerService:
     ) -> ScheduleModel:
         """Schedule a session for a course with professor and classroom."""
         # Check if professor is assigned to this course
-        professor = db.query(ProfessorModel).filter(ProfessorModel.uuid == professor_id).first()
-        course = db.query(CourseModel).filter(CourseModel.uuid == course_id).first()
+        professor = db.query(ProfessorModel).filter(ProfessorModel.id == professor_id).first()
+        course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
         
         if course not in professor.courses:
             raise ValueError(f"Professor {professor.name} is not assigned to course {course.name}")
@@ -150,7 +148,7 @@ class SchedulerService:
             raise ValueError(f"Professor has a restriction for {weekday.value} during {time_block.value}")
         
         # Check if classroom has required equipment
-        classroom = db.query(ClassroomModel).filter(ClassroomModel.uuid == classroom_id).first()
+        classroom = db.query(ClassroomModel).filter(ClassroomModel.id == classroom_id).first()
         if course.requires_equipment and not classroom.has_equipment:
             raise ValueError(f"Course {course.name} requires equipment but classroom {classroom.name} doesn't have it")
         
@@ -240,7 +238,7 @@ class SchedulerService:
         - 3-hour courses should have one block
         - 4-hour courses should have two 2-hour blocks on different days
         """
-        course = db.query(CourseModel).filter(CourseModel.uuid == course_id).first()
+        course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
         schedules = db.query(ScheduleModel).filter(ScheduleModel.course_id == course_id).all()
         
         total_hours = sum((s.end_time.hour - s.start_time.hour) + 
