@@ -29,32 +29,42 @@ def add_course_callback():
     name = dpg.get_value("course_name")
     weekly_hours = dpg.get_value("course_weekly_hours")
     requires_eq = dpg.get_value("course_requires_eq")
+    session = next(get_db())
     try:
-        course = scheduler_service.add_course(db, code, name, int(weekly_hours), requires_eq)
+        course = scheduler_service.add_course(session, code, name, int(weekly_hours), requires_eq)
         show_message(f"Added Course: {course.name} (ID: {course.id})", (0, 255, 0))
     except Exception as e:
         show_message(str(e), (255, 0, 0))
+    finally:
+        session.close()
 
 def add_classroom_callback():
     name = dpg.get_value("classroom_name")
     has_eq = dpg.get_value("classroom_has_eq")
     capacity = dpg.get_value("classroom_capacity")
+    session = next(get_db())
     try:
-        classroom = scheduler_service.add_classroom(db, name, has_eq, int(capacity))
+        classroom = scheduler_service.add_classroom(session, name, has_eq, int(capacity))
         show_message(f"Added Classroom: {classroom.name} (ID: {classroom.id})", (0, 255, 0))
     except Exception as e:
         show_message(str(e), (255, 0, 0))
+    finally:
+        session.close()
 
 def assign_course_callback():
+    session = next(get_db())
     try:
         prof_id = int(dpg.get_value("assign_professor_id"))
         course_id = int(dpg.get_value("assign_course_id"))
-        scheduler_service.assign_course_to_professor(db, prof_id, course_id)
+        scheduler_service.assign_course_to_professor(session, prof_id, course_id)
         show_message(f"Assigned Course {course_id} to Professor {prof_id}", (0, 255, 0))
     except Exception as e:
         show_message(str(e), (255, 0, 0))
+    finally:
+        session.close()
 
 def schedule_session_callback():
+    session = next(get_db())
     try:
         course_id = int(dpg.get_value("schedule_course_id"))
         prof_id = int(dpg.get_value("schedule_professor_id"))
@@ -79,7 +89,7 @@ def schedule_session_callback():
             raise ValueError("Invalid weekday selected")
 
         schedule = scheduler_service.schedule_course_session(
-            db,
+            session,
             course_id,
             prof_id,
             classroom_id,
@@ -90,17 +100,22 @@ def schedule_session_callback():
         show_message(f"Scheduled session ID {schedule.id}", (0, 255, 0))
     except Exception as e:
         show_message(str(e), (255, 0, 0))
+    finally:
+        session.close()
 
 def validate_course_callback():
+    session = next(get_db())
     try:
         course_id = int(dpg.get_value("validate_course_id"))
-        valid = scheduler_service.validate_course_scheduling(db, course_id)
+        valid = scheduler_service.validate_course_scheduling(session, course_id)
         if valid:
             show_message("Course scheduling is valid!", (0, 255, 0))
         else:
             show_message("Course scheduling is NOT valid!", (255, 255, 0))
     except Exception as e:
         show_message(str(e), (255, 0, 0))
+    finally:
+        session.close()
 
 
 dpg.create_context()
