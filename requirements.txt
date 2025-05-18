@@ -1,0 +1,5 @@
+dearpygui==2.0.0
+greenlet==3.2.2
+PyMySQL==1.1.1
+SQLAlchemy==2.0.41
+typing_extensions==4.13.2
