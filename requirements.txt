@@ -1,5 +1,8 @@
+cffi==1.17.1
+cryptography==45.0.2
 dearpygui==2.0.0
 greenlet==3.2.2
+pycparser==2.22
 PyMySQL==1.1.1
 SQLAlchemy==2.0.41
 typing_extensions==4.13.2
