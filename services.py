@@ -19,6 +19,7 @@ class SchedulerService:
     Service to handle scheduling logic for courses, professors, and classrooms.
     """
     
+    @staticmethod
     def add_professor(
         db: Session, 
         name: str, 

@@ -14,12 +14,15 @@ def show_message(message, color=(255, 255, 255)):
 def add_professor_callback():
     name = dpg.get_value("prof_name")
     doc_id = dpg.get_value("prof_doc_id")
+    session = next(get_db())
     try:
-        with db as session:
-            prof = scheduler_service.add_professor(session, name, doc_id)
-            show_message(f"Added Professor: {prof.name} (ID: {prof.id})", (0, 255, 0))
+        prof = scheduler_service.add_professor(session, name, doc_id)
+        show_message(f"Added Professor: {prof.name} (ID: {prof.id})", (0, 255, 0))
     except Exception as e:
+        print(e)
         show_message(str(e), (255, 0, 0))
+    finally:
+        session.close()
 
 def add_course_callback():
     code = dpg.get_value("course_code")
