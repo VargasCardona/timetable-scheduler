@@ -27,13 +27,21 @@ class SchedulerService:
         document_id: str
     ) -> ProfessorModel:
         """Add a new professor to the database."""
-        professor = ProfessorModel(
-            name=name,
-            document_id=document_id
-        )
-        db.add(professor)
-        db.commit()
-        db.refresh(professor)
+        if not name or not document_id:
+            raise ValueError("Name and document ID are required")
+
+        try:
+            professor = ProfessorModel(
+                name=name,
+                document_id=document_id
+            )
+            db.add(professor)
+            db.commit()
+            db.refresh(professor)
+        except IntegrityError as exc:
+            db.rollback()
+            raise ValueError(f"Professor with document ID {document_id} already exists") from exc
+        
         return professor
 
     @staticmethod
@@ -46,7 +54,7 @@ class SchedulerService:
         """Update an existing professor's details."""
         professor = db.query(ProfessorModel).filter(ProfessorModel.id == professor_id).first()
         if not professor:
-            return None
+            raise ValueError(f"Professor with ID {professor_id} not found")
         
         # Update only the fields that are provided
         if name:
@@ -54,8 +62,13 @@ class SchedulerService:
         if document_id:
             professor.document_id = document_id
         
-        db.commit()
-        db.refresh(professor)
+        try:
+            db.commit()
+            db.refresh(professor)
+        except IntegrityError as exc:
+            db.rollback()
+            raise ValueError(f"Professor with document ID {document_id} already exists") from exc
+        
         return professor
 
     @staticmethod
@@ -76,7 +89,10 @@ class SchedulerService:
     @staticmethod
     def get_professor_by_id(db: Session, id: str) -> Optional[ProfessorModel]:
         """Get a professor by their ID."""
-        return db.query(ProfessorModel).filter(ProfessorModel.id == id).first()
+        professor = db.query(ProfessorModel).filter(ProfessorModel.id == id).first()
+        if not professor:
+            raise ValueError(f"Professor with ID {id} not found")
+        return professor
     
     @staticmethod
     def get_professor_by_name(db: Session, name: str) -> List[ProfessorModel]:
@@ -187,6 +203,17 @@ class SchedulerService:
         if course not in professor.courses:
             raise ValueError(f"Professor {professor.name} is not assigned to course {course.name}")
         
+        # Check if the time is valid
+        if start_time >= end_time:
+            raise ValueError("Start time must be before end time")
+        if start_time < time(8, 0) or end_time > time(22, 0):
+            raise ValueError("Classroom hours must be between 08:00 and 22:00")
+        course_duration = (end_time.hour - start_time.hour) + (end_time.minute - start_time.minute) / 60
+        if course.weekly_hours == 3 and course_duration != 3:
+            raise ValueError("3-hour courses must be scheduled in one block")
+        if course.weekly_hours == 4 and course_duration != 2:
+            raise ValueError("4-hour courses must be scheduled in two blocks of 2 hours each")
+
         # Check if professor has a restriction for this time
         time_block = SchedulerService._determine_time_block(start_time)
         restriction = db.query(ProfessorRestrictionModel).filter(
