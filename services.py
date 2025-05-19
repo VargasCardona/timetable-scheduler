@@ -180,6 +180,10 @@ class SchedulerService:
         professor = db.query(ProfessorModel).filter(ProfessorModel.id == professor_id).first()
         course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
         
+        if not professor:
+            raise ValueError(f"Professor with ID {professor_id} not found")
+        if not course:
+            raise ValueError(f"Course with ID {course_id} not found")
         if course not in professor.courses:
             raise ValueError(f"Professor {professor.name} is not assigned to course {course.name}")
         
@@ -196,6 +200,9 @@ class SchedulerService:
         
         # Check if classroom has required equipment
         classroom = db.query(ClassroomModel).filter(ClassroomModel.id == classroom_id).first()
+
+        if not classroom:
+            raise ValueError(f"Classroom with ID {classroom_id} not found")
         if course.requires_equipment and not classroom.has_equipment:
             raise ValueError(f"Course {course.name} requires equipment but classroom {classroom.name} doesn't have it")
         
