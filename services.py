@@ -415,6 +415,19 @@ class SchedulerService:
         return schedule
     
     @staticmethod
+    def remove_course_session(
+        db: Session,
+        schedule_id: int
+    ) -> None:
+        """Remove a scheduled session."""
+        schedule = db.query(ScheduleModel).filter(ScheduleModel.id == schedule_id).first()
+        if not schedule:
+            raise ValueError(f"Schedule with ID {schedule_id} not found")
+        
+        db.delete(schedule)
+        db.commit()
+
+    @staticmethod
     def _determine_time_block(start_time: time) -> TimeBlock:
         """Determine the time block based on the start time."""
         if start_time < time(12, 0):
