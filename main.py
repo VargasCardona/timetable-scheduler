@@ -20,6 +20,13 @@ def get_classrooms():
     finally:
         session.close()
 
+def get_schedules():
+    session = next(get_db())
+    try:
+        return scheduler_service.get_schedules(session)
+    finally:
+        session.close()
+
 def get_classroom_callback():
     session = next(get_db())
     classroom_id = dpg.get_value("classroom_id")
@@ -265,6 +272,7 @@ def schedule_session_callback():
             end_time_obj
         )
         show_message(f"Scheduled session ID {schedule.id}", (0, 255, 0))
+        update_schedule_table()
     except Exception as e:
         show_message(str(e), (255, 0, 0))
     finally:
@@ -318,6 +326,21 @@ def update_classroom_table():
             dpg.add_text(f"{classroom.name}")
             dpg.add_text(f"{'Yes' if classroom.has_equipment else 'No'}")
             dpg.add_text(f"{classroom.capacity}")
+
+def update_schedule_table():
+    """Refresh the schedule table with the latest data."""
+    for tag in dpg.get_item_children("schedule_table")[1]:
+        dpg.delete_item(tag)
+    schedules = get_schedules()
+    for schedule in schedules:
+        with dpg.table_row(parent="schedule_table"):
+            dpg.add_text(f"{schedule.id}")
+            dpg.add_text(f"{schedule.course_id}")
+            dpg.add_text(f"{schedule.professor_id}")
+            dpg.add_text(f"{schedule.classroom_id}")
+            dpg.add_text(f"{schedule.weekday}")
+            dpg.add_text(f"{schedule.start_time}")
+            dpg.add_text(f"{schedule.end_time}")
 
 dpg.create_context()
 dpg.create_viewport(title='Scheduler GUI', width=800, height=600)
@@ -442,6 +465,20 @@ with dpg.window(label="Scheduler", width=800, height=600):
                 dpg.add_button(label="Remove", callback=remove_course_callback)
         
         with dpg.tab(label="Schedule Session"):
+            with dpg.table(tag="schedule_table", header_row=True, row_background=True,
+                         borders_innerH=True, borders_outerH=True, borders_innerV=True,
+                         borders_outerV=True, width=500, height=200):
+
+                dpg.add_table_column(label="ID")
+                dpg.add_table_column(label="Course ID")
+                dpg.add_table_column(label="Professor ID")
+                dpg.add_table_column(label="Classroom ID")
+                dpg.add_table_column(label="Weekday")
+                dpg.add_table_column(label="Start Time")
+                dpg.add_table_column(label="End Time")
+
+                update_schedule_table()
+
             dpg.add_input_int(label="Course ID", tag="schedule_course_id")
             dpg.add_input_int(label="Professor ID", tag="schedule_professor_id")
             dpg.add_input_int(label="Classroom ID", tag="schedule_classroom_id")

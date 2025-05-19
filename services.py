@@ -11,7 +11,8 @@ from models import (
     ScheduleModel,
     ProfessorRestrictionModel,
     WeekDay,
-    TimeBlock
+    TimeBlock,
+    professor_course_association
 )
 
 
@@ -81,10 +82,21 @@ class SchedulerService:
             return True
         return False
     
+
+    @staticmethod
+    def get_professors_course(db: Session):
+        """Get a professors course"""
+        return db.query(professor_course_association).all()
+
     @staticmethod
     def get_professors(db: Session) -> Optional[List[ProfessorModel]]:
         """Get a professors"""
         return db.query(ProfessorModel).all()
+
+    @staticmethod
+    def get_schedules(db: Session):
+        """Get schedules"""
+        return db.query(ScheduleModel).all()
 
     @staticmethod
     def get_professor_by_id(db: Session, id: str) -> Optional[ProfessorModel]:
