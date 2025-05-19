@@ -2,6 +2,7 @@ import dearpygui.dearpygui as dpg
 from datetime import time
 from session import get_db
 from services import SchedulerService
+from models import WeekDay
 
 # Placeholders for external db session and service, to be assigned before use
 db = get_db()
@@ -78,12 +79,10 @@ def schedule_session_callback():
         start_time_obj = time(start_h, start_m)
         end_time_obj = time(end_h, end_m)
 
-        # Convert weekday string to WeekDay enum (assuming WeekDay enum has .from_str or similar)
-        # You need to adapt this conversion to your WeekDay enum
         weekday_enum = None
-        for wd in scheduler_service.WeekDay:
-            if wd.value == weekday:
-                weekday_enum = wd
+        for day in WeekDay:
+            if day.value == weekday:
+                weekday_enum = day
                 break
         if not weekday_enum:
             raise ValueError("Invalid weekday selected")

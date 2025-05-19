@@ -70,7 +70,7 @@ class ProfessorRestrictionModel(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     professor_id = Column(Integer, ForeignKey("professors.id"), nullable=False)
-    weekday = Column(Enum(WeekDay), nullable=False)
+    weekday = Column(Enum(WeekDay, values_callable=lambda x: [e.value for e in x]), nullable=False)
     time_block = Column(Enum(TimeBlock), nullable=False)
 
     # Relationships
@@ -129,7 +129,7 @@ class ScheduleModel(Base):
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
     professor_id = Column(Integer, ForeignKey("professors.id"), nullable=False)
     classroom_id = Column(Integer, ForeignKey("classrooms.id"), nullable=False)
-    weekday = Column(Enum(WeekDay), nullable=False)
+    weekday = Column(Enum(WeekDay, values_callable=lambda x: [e.value for e in x]), nullable=False)
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
 
