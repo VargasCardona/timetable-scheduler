@@ -41,6 +41,7 @@ def add_professor_callback():
     try:
         prof = scheduler_service.add_professor(session, name, doc_id)
         show_message(f"Added Professor: {prof.name} (ID: {prof.id})", (0, 255, 0))
+        update_prof_table()
     except Exception as e:
         print(e)
         show_message(str(e), (255, 0, 0))
@@ -55,6 +56,7 @@ def update_professor_callback():
     try:
         prof = scheduler_service.update_professor(session,proff_id, name, doc_id)
         show_message(f"Updated Professor", (0, 255, 0))
+        update_prof_table()
     except Exception as e:
         print(e)
         show_message(str(e), (255, 0, 0))
@@ -67,6 +69,7 @@ def delete_professor_callback():
     try:
         prof = scheduler_service.delete_professor(session, proff_id)
         show_message(f"Deleted Professor", (0, 255, 0))
+        update_prof_table()
     except Exception as e:
         print(e)
         show_message(str(e), (255, 0, 0))
@@ -164,6 +167,15 @@ def validate_course_callback():
     finally:
         session.close()
 
+def update_prof_table():
+    for tag in dpg.get_item_children("prof_table")[1]:
+        dpg.delete_item(tag)
+    professors = get_professors()
+    for professor in professors:
+        with dpg.table_row(parent="prof_table"):
+            dpg.add_text(f"{professor.id}")
+            dpg.add_text(f"{professor.name}")
+            dpg.add_text(f"{professor.document_id}")
 
 dpg.create_context()
 dpg.create_viewport(title='Scheduler GUI', width=700, height=500)
@@ -173,7 +185,7 @@ with dpg.window(label="Scheduler", width=700, height=500):
         
         with dpg.tab(label="Add Professor"):
          with dpg.group(horizontal=True):
-            with dpg.table(tag="contacts_table", header_row=True, row_background=True,
+            with dpg.table(tag="prof_table", header_row=True, row_background=True,
                                borders_innerH=True, borders_outerH=True, borders_innerV=True,
                                borders_outerV=True, width=300, height=200):
                 dpg.add_table_column(label="ID")
