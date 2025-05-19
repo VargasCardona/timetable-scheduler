@@ -137,6 +137,8 @@ class SchedulerService:
         if name:
             course.name = name
         if weekly_hours is not None:
+            if weekly_hours not in [3, 4]:
+                raise ValueError("Weekly hours must be either 3 or 4")
             course.weekly_hours = weekly_hours
         if requires_equipment is not None:
             course.requires_equipment = requires_equipment
@@ -185,6 +187,13 @@ class SchedulerService:
         requires_equipment: bool = False
     ) -> CourseModel:
         """Add a new course to the database."""
+        if not code or not name:
+            raise ValueError("Code and name are required")
+        if weekly_hours not in [3, 4]:
+            raise ValueError("Weekly hours must be either 3 or 4")
+        if requires_equipment not in [True, False]:
+            raise ValueError("Requires equipment must be a boolean value")
+
         course = CourseModel(
             code=code,
             name=name,
@@ -204,6 +213,13 @@ class SchedulerService:
         capacity: int = 30
     ) -> ClassroomModel:
         """Add a new classroom to the database."""
+        if not name:
+            raise ValueError("Name is required")
+        if capacity <= 0:
+            raise ValueError("Capacity must be a positive integer")
+        if has_equipment not in [True, False]:
+            raise ValueError("Has equipment must be a boolean value")
+
         classroom = ClassroomModel(
             name=name,
             has_equipment=has_equipment,
@@ -234,6 +250,8 @@ class SchedulerService:
         if has_equipment is not None:
             classroom.has_equipment = has_equipment
         if capacity is not None:
+            if capacity <= 0:
+                raise ValueError("Capacity must be a positive integer")
             classroom.capacity = capacity
 
         try:
@@ -296,6 +314,33 @@ class SchedulerService:
         except IntegrityError as exc:
             db.rollback()
             raise ValueError(f"Course {course.name} is already assigned to professor {professor.name}") from exc
+    
+    @staticmethod
+    def remove_course_from_professor(
+        db: Session, 
+        professor_id: int, 
+        course_id: int
+    ) -> None:
+        """Remove a course from a professor."""
+        professor = db.query(ProfessorModel).filter(ProfessorModel.id == professor_id).first()
+        course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
+        
+        if not professor:
+            raise ValueError(f"Professor with ID {professor_id} not found")
+        if not course:
+            raise ValueError(f"Course with ID {course_id} not found")
+        
+        # Check if the course is already scheduled
+        if db.query(ScheduleModel).filter(
+            ScheduleModel.course_id == course_id, ScheduleModel.professor_id == professor_id
+        ).count() > 0:
+            raise ValueError(f"Course {course.name} is already scheduled and cannot be removed")
+
+        if course in professor.courses:
+            professor.courses.remove(course)
+            db.commit()
+        else:
+            raise ValueError(f"Course {course.name} is not assigned to professor {professor.name}")
 
     @staticmethod
     def schedule_course_session(

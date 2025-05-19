@@ -220,6 +220,18 @@ def assign_course_callback():
     finally:
         session.close()
 
+def remove_course_callback():
+    session = next(get_db())
+    try:
+        prof_id = int(dpg.get_value("assign_professor_id"))
+        course_id = int(dpg.get_value("assign_course_id"))
+        scheduler_service.remove_course_from_professor(session, prof_id, course_id)
+        show_message(f"Removed Course {course_id} from Professor {prof_id}", (0, 255, 0))
+    except Exception as e:
+        show_message(str(e), (255, 0, 0))
+    finally:
+        session.close()
+
 def schedule_session_callback():
     session = next(get_db())
     try:
@@ -425,7 +437,9 @@ with dpg.window(label="Scheduler", width=800, height=600):
         with dpg.tab(label="Assign Course"):
             dpg.add_input_int(label="Professor ID", tag="assign_professor_id")
             dpg.add_input_int(label="Course ID", tag="assign_course_id")
-            dpg.add_button(label="Assign", callback=assign_course_callback)
+            with dpg.group(horizontal=True):
+                dpg.add_button(label="Assign", callback=assign_course_callback)
+                dpg.add_button(label="Remove", callback=remove_course_callback)
         
         with dpg.tab(label="Schedule Session"):
             dpg.add_input_int(label="Course ID", tag="schedule_course_id")
