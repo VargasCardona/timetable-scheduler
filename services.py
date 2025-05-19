@@ -1,6 +1,7 @@
 import enum
 from datetime import time
 from typing import List, Optional, Dict, Tuple
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from models import (
@@ -111,14 +112,22 @@ class SchedulerService:
         professor = db.query(ProfessorModel).filter(ProfessorModel.id == professor_id).first()
         course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
         
-        if professor and course:
-            # Check if professor already has 6 courses
-            if len(professor.courses) >= 6:
-                raise ValueError("Professor already has the maximum of 6 courses assigned")
-                
+        if not professor:
+            raise ValueError(f"Professor with ID {professor_id} not found")
+        if not course:
+            raise ValueError(f"Course with ID {course_id} not found")
+    
+        # Check if professor already has 6 courses
+        if len(professor.courses) >= 6:
+            raise ValueError("Professor already has the maximum of 6 courses assigned")
+        
+        try:
             professor.courses.append(course)
             db.commit()
-    
+        except IntegrityError as exc:
+            db.rollback()
+            raise ValueError(f"Course {course.name} is already assigned to professor {professor.name}") from exc
+
     @staticmethod
     def schedule_course_session(
         db: Session,
@@ -240,6 +249,10 @@ class SchedulerService:
         - 4-hour courses should have two 2-hour blocks on different days
         """
         course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
+
+        if not course:
+            raise ValueError(f"Course with ID {course_id} not found")
+
         schedules = db.query(ScheduleModel).filter(ScheduleModel.course_id == course_id).all()
         
         total_hours = sum((s.end_time.hour - s.start_time.hour) + 
