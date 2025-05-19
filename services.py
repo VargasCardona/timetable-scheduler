@@ -35,11 +35,48 @@ class SchedulerService:
         db.commit()
         db.refresh(professor)
         return professor
+
+    @staticmethod
+    def update_professor(
+        db: Session,
+        professor_id: str,
+        name: Optional[str] = None,
+        document_id: Optional[str] = None
+    ) -> Optional[ProfessorModel]:
+        """Update an existing professor's details."""
+        professor = db.query(ProfessorModel).filter(ProfessorModel.id == professor_id).first()
+        if not professor:
+            return None
+        
+        # Update only the fields that are provided
+        if name:
+            professor.name = name
+        if document_id:
+            professor.document_id = document_id
+        
+        db.commit()
+        db.refresh(professor)
+        return professor
+
+    @staticmethod
+    def delete_professor(db: Session, professor_id: str) -> bool:
+        """Delete a professor by their ID."""
+        professor = db.query(ProfessorModel).filter(ProfessorModel.id == professor_id).first()
+        if professor:
+            db.delete(professor)
+            db.commit()
+            return True
+        return False
     
     @staticmethod
-    def get_professor_by_document(db: Session, document_id: str) -> Optional[ProfessorModel]:
-        """Get a professor by their document ID."""
-        return db.query(ProfessorModel).filter(ProfessorModel.document_id == document_id).first()
+    def get_professors(db: Session) -> Optional[List[ProfessorModel]]:
+        """Get a professors"""
+        return db.query(ProfessorModel).all()
+
+    @staticmethod
+    def get_professor_by_id(db: Session, id: str) -> Optional[ProfessorModel]:
+        """Get a professor by their ID."""
+        return db.query(ProfessorModel).filter(ProfessorModel.id == id).first()
     
     @staticmethod
     def get_professor_by_name(db: Session, name: str) -> List[ProfessorModel]:

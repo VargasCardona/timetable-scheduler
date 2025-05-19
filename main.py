@@ -12,6 +12,28 @@ def show_message(message, color=(255, 255, 255)):
     dpg.set_value("output_text", message)
     dpg.configure_item("output_text", color=color)
 
+def get_professors():
+    session = next(get_db())
+    try:
+        return scheduler_service.get_professors(session)
+    finally:
+        session.close()
+
+def get_professor_callback():
+    session = next(get_db())
+    prof_id = dpg.get_value("prof_id")
+
+    try:
+        prof = scheduler_service.get_professor_by_id(session, prof_id)
+        dpg.set_value("prof_name", prof.name)
+        dpg.set_value("prof_doc_id", prof.document_id)
+
+    except Exception as e:
+        print(e)
+        show_message(str(e), (255, 0, 0))
+    finally:
+        session.close()
+
 def add_professor_callback():
     name = dpg.get_value("prof_name")
     doc_id = dpg.get_value("prof_doc_id")
@@ -19,6 +41,32 @@ def add_professor_callback():
     try:
         prof = scheduler_service.add_professor(session, name, doc_id)
         show_message(f"Added Professor: {prof.name} (ID: {prof.id})", (0, 255, 0))
+    except Exception as e:
+        print(e)
+        show_message(str(e), (255, 0, 0))
+    finally:
+        session.close()
+
+def update_professor_callback():
+    proff_id = dpg.get_value("prof_id")
+    name = dpg.get_value("prof_name")
+    doc_id = dpg.get_value("prof_doc_id")
+    session = next(get_db())
+    try:
+        prof = scheduler_service.update_professor(session,proff_id, name, doc_id)
+        show_message(f"Updated Professor", (0, 255, 0))
+    except Exception as e:
+        print(e)
+        show_message(str(e), (255, 0, 0))
+    finally:
+        session.close()
+
+def delete_professor_callback():
+    proff_id = dpg.get_value("prof_id")
+    session = next(get_db())
+    try:
+        prof = scheduler_service.delete_professor(session, proff_id)
+        show_message(f"Deleted Professor", (0, 255, 0))
     except Exception as e:
         print(e)
         show_message(str(e), (255, 0, 0))
@@ -124,10 +172,42 @@ with dpg.window(label="Scheduler", width=700, height=500):
     with dpg.tab_bar():
         
         with dpg.tab(label="Add Professor"):
-            dpg.add_input_text(label="Name", tag="prof_name")
-            dpg.add_input_text(label="Document ID", tag="prof_doc_id")
-            dpg.add_button(label="Add Professor", callback=add_professor_callback)
-        
+         with dpg.group(horizontal=True):
+            with dpg.table(tag="contacts_table", header_row=True, row_background=True,
+                               borders_innerH=True, borders_outerH=True, borders_innerV=True,
+                               borders_outerV=True, width=300, height=200):
+                dpg.add_table_column(label="ID")
+                dpg.add_table_column(label="Name")
+                dpg.add_table_column(label="Document ID")
+
+                professors = get_professors()
+                
+                for professor in professors:
+                    with dpg.table_row():
+                        dpg.add_text(f"{professor.id}")
+                        dpg.add_text(f"{professor.name}")
+                        dpg.add_text(f"{professor.document_id}")
+            with dpg.group(horizontal=False):
+                      with dpg.group(horizontal=True):
+                          with dpg.group(horizontal=False):
+                            dpg.add_text("Buscar ID")
+                            dpg.add_input_text(tag="prof_id", hint="Ingrese un ID", width=185)
+                          with dpg.group(horizontal=False):
+                            dpg.add_spacer(height=19)
+                            dpg.add_button(label="Consultar", callback=get_professor_callback)
+
+                      dpg.add_text("Professor's Name")
+                      dpg.add_input_text(tag="prof_name", hint="Professor's Name", width=-1)
+
+                      dpg.add_text("Document ID")
+                      dpg.add_input_text(tag="prof_doc_id", hint="Document ID", width=-1)
+                      dpg.add_spacer(height=2)
+                      
+                      with dpg.group(horizontal=True):
+                       dpg.add_button(label="Register", callback=add_professor_callback)
+                       dpg.add_button(label="Edit", callback=update_professor_callback)
+                       dpg.add_button(label="Delete Professor", callback=delete_professor_callback)
+
         with dpg.tab(label="Add Course"):
             dpg.add_input_text(label="Code", tag="course_code")
             dpg.add_input_text(label="Name", tag="course_name")
