@@ -116,6 +116,65 @@ class SchedulerService:
         db.commit()
         db.refresh(restriction)
         return restriction
+
+    @staticmethod
+    def update_course(
+        db: Session,
+        course_id: str,
+        code: Optional[str] = None,
+        name: Optional[str] = None,
+        weekly_hours: Optional[int] = None,
+        requires_equipment: Optional[bool] = None
+    ) -> Optional[CourseModel]:
+        """Update an existing course's details."""
+        course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
+        if not course:
+            raise ValueError(f"Course with ID {course_id} not found")
+
+        # Update only the fields that are provided
+        if code:
+            course.code = code
+        if name:
+            course.name = name
+        if weekly_hours is not None:
+            course.weekly_hours = weekly_hours
+        if requires_equipment is not None:
+            course.requires_equipment = requires_equipment
+
+        try:
+            db.commit()
+            db.refresh(course)
+        except IntegrityError as exc:
+            db.rollback()
+            raise ValueError(f"Course with code {code} already exists") from exc
+
+        return course
+
+
+    @staticmethod
+    def delete_course(db: Session, course_id: str) -> bool:
+        """Delete a course by its ID."""
+        course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
+        if course:
+            db.delete(course)
+            db.commit()
+            return True
+        return False
+
+
+    @staticmethod
+    def get_courses(db: Session) -> Optional[List[CourseModel]]:
+        """Get all courses."""
+        return db.query(CourseModel).all()
+
+
+    @staticmethod
+    def get_course_by_id(db: Session, course_id: str) -> Optional[CourseModel]:
+        """Get a course by its ID."""
+        course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
+        if not course:
+            raise ValueError(f"Course with ID {course_id} not found")
+        return course
     
     @staticmethod
     def add_course(
@@ -153,6 +212,63 @@ class SchedulerService:
         db.add(classroom)
         db.commit()
         db.refresh(classroom)
+        return classroom
+
+
+    @staticmethod
+    def update_classroom(
+        db: Session,
+        classroom_id: str,
+        name: Optional[str] = None,
+        has_equipment: Optional[bool] = None,
+        capacity: Optional[int] = None
+    ) -> Optional[ClassroomModel]:
+        """Update an existing classroom's details."""
+        classroom = db.query(ClassroomModel).filter(ClassroomModel.id == classroom_id).first()
+        if not classroom:
+            raise ValueError(f"Classroom with ID {classroom_id} not found")
+
+        # Update only the fields that are provided
+        if name:
+            classroom.name = name
+        if has_equipment is not None:
+            classroom.has_equipment = has_equipment
+        if capacity is not None:
+            classroom.capacity = capacity
+
+        try:
+            db.commit()
+            db.refresh(classroom)
+        except IntegrityError as exc:
+            db.rollback()
+            raise ValueError(f"Classroom with name {name} already exists") from exc
+
+        return classroom
+
+
+    @staticmethod
+    def delete_classroom(db: Session, classroom_id: str) -> bool:
+        """Delete a classroom by its ID."""
+        classroom = db.query(ClassroomModel).filter(ClassroomModel.id == classroom_id).first()
+        if classroom:
+            db.delete(classroom)
+            db.commit()
+            return True
+        return False
+
+
+    @staticmethod
+    def get_classrooms(db: Session) -> Optional[List[ClassroomModel]]:
+        """Get all classrooms."""
+        return db.query(ClassroomModel).all()
+
+
+    @staticmethod
+    def get_classroom_by_id(db: Session, classroom_id: str) -> Optional[ClassroomModel]:
+        """Get a classroom by its ID."""
+        classroom = db.query(ClassroomModel).filter(ClassroomModel.id == classroom_id).first()
+        if not classroom:
+            raise ValueError(f"Classroom with ID {classroom_id} not found")
         return classroom
     
     @staticmethod
